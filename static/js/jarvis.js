@@ -270,7 +270,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (event.error !== 'no-speech') {
                 statusMessage.textContent = 'आवाज स्पष्ट आला नाही. पुन्हा बोला किंवा टाइप करा.';
             } else {
-                statusMessage.textContent = '⚡ "Hey Jarvis" ऐकत आहे... (Direct Voice Active)';
+                statusMessage.textContent = 'मायक्रोफोन बंद आहे. बोलण्यासाठी पुन्हा क्लिक करा.';
             }
             setTimeout(() => {
                 if (typeof resumeWakeWordIfNeeded === 'function') resumeWakeWordIfNeeded();
@@ -282,7 +282,7 @@ document.addEventListener('DOMContentLoaded', () => {
             micBtn.classList.remove('listening');
             micIconStatus.className = 'fa-solid fa-microphone-lines';
             if (!isSpeaking) {
-                statusMessage.textContent = '⚡ "Hey Jarvis" ऐकत आहे... (Direct Voice Active)';
+                statusMessage.textContent = 'मायक्रोफोन बंद आहे. बोलण्यासाठी पुन्हा क्लिक करा.';
             }
             setTimeout(() => {
                 if (typeof resumeWakeWordIfNeeded === 'function') resumeWakeWordIfNeeded();
