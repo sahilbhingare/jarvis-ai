@@ -720,16 +720,16 @@ def ask_gemini(query: str, target_lang: str = 'mr', session_id: str = 'default',
         now = datetime.datetime.now()
         realtime_context = f"The EXACT real-time current date and time right now is: {now.strftime('%A, %d %B %Y, %I:%M:%S %p')}."
 
-        address_prompt = f"You address the user courteously as '{user_name}'." if user_name != 'Sir' else "You address the user courteously as 'Sir' or 'Boss'."
+        address_prompt = f"The user you are currently talking to is named '{user_name}'. You must address them courteously as '{user_name}'." if user_name != 'Sir' else "You do not know the user's name, so address them courteously as 'Sir' or 'Boss'."
         system_instruction = (
             f"You are JARVIS, an ultra-intelligent, respectful, crisp and highly knowledgeable AI assistant like Iron Man's JARVIS. "
             f"{address_prompt} "
             f"{lang_rule} "
             f"{realtime_context} "
-            f"Answer ANY question the user asks with accurate facts, clarity and rich knowledge. "
-            f"Keep answers direct, structured, engaging and well-spoken for text-to-speech. "
-            f"Special Fact about Sahil: Sahil has completed his Computer Diploma with 69.88%. Currently, he is pursuing Full Stack Developer classes/training at Vyomx Tech Solution Pvt. Ltd., Ambegaon, Narhe (पुणे). Whenever asked about Sahil or Sahil's education/career, always proudly and accurately state these details. "
-            f"Special Fact about Sahil's Family: Ashok Bhingare (अशोक भिंगारे) is Sahil's father (वडील). Sunita (सुनीता) is Sahil's mother (आई). Rohan (रोहन) is Sahil's brother (भाऊ). Whenever asked about Sahil's family, father, mother, or brother, state these facts respectfully. "
+            f"Answer ANY question the user asks with accurate facts, clarity and rich knowledge. Keep answers direct, structured, engaging and well-spoken for text-to-speech. "
+            f"CRITICAL IDENTITY RULE: The user you are talking to ({user_name}) is NOT necessarily Sahil. Do NOT assume the user is Sahil unless they explicitly say they are. If the user asks 'who am I', 'tell me about me', or about their own family/education, respond based ONLY on what they have told you. Do NOT give Sahil's information unless the user specifically asks about 'Sahil'. "
+            f"Special Fact about your creator, Sahil: Sahil has completed his Computer Diploma with 69.88%. Currently, he is pursuing Full Stack Developer classes/training at Vyomx Tech Solution Pvt. Ltd., Ambegaon, Narhe (पुणे). Whenever asked specifically about Sahil or Sahil's education/career, always proudly and accurately state these details. "
+            f"Special Fact about Sahil's Family: Ashok Bhingare (अशोक भिंगारे) is Sahil's father (वडील). Sunita (सुनीता) is Sahil's mother (आई). Rohan (रोहन) is Sahil's brother (भाऊ). Whenever asked specifically about Sahil's family, father, mother, or brother, state these facts respectfully. "
             f"Special Fact about Shubham: Shubham Kalamkar (शुभम कळमकर) is Sahil's (साहिल) best friend. If asked about Shubham Kalamkar, clearly state that he is Sahil's friend (तो साहिलचा फ्रेंड आहे). "
             f"Special Fact about Yogesh: Yogesh Bhasar (योगेश भासार) is Sahil's (साहिल) friend (मित्र). If asked about Yogesh Bhasar, clearly state that he is Sahil's friend (तो साहिलचा मित्र आहे). "
             f"Special Fact about Kartik: Kartik Mohite (कार्तिक मोहिते) is Sahil's (साहिल) friend (मित्र). If asked about Kartik Mohite, clearly state that he is Sahil's friend (तो साहिलचा मित्र आहे). "
@@ -1004,13 +1004,13 @@ def get_answer(query: str, lang: str = 'mr', session_id: str = 'default', image:
 
     # 0.1.1 👨‍👩‍👦 Check "साहिलचे कुटुंब / फॅमिली" Intent (वडील: अशोक भिंगारे, आई: सुनीता, भाऊ: रोहन)
     sahil_fam_kw = [
-        'sahil chi family', 'sahil family', 'sahil che kutumb', 'sahil kutumb', 'family vishayi',
-        'family badal', 'family sang', 'family chi mahiti', 'tell me about family', 'sahil family members',
+        'sahil chi family', 'sahil family', 'sahil che kutumb', 'sahil kutumb', 'sahil family vishayi',
+        'sahil family badal', 'sahil family sang', 'sahil family chi mahiti', 'tell me about sahil family', 'sahil family members',
         "sahil's family", 'sahils family', 'sahil family in',
-        'साहिलची फॅमिली', 'साहिलचे कुटुंब', 'साहिलचं कुटुंब', 'फॅमिली विषयी', 'फॅमिली बद्दल', 'कुटुंबाविषयी सांग',
+        'साहिलची फॅमिली', 'साहिलचे कुटुंब', 'साहिलचं कुटुंब', 'साहिलच्या फॅमिली विषयी', 'साहिलच्या फॅमिली बद्दल', 'साहिलच्या कुटुंबाविषयी सांग',
         'साहिलच्या कुटुंबाबद्दल', 'साहिलच्या फॅमिलीबद्दल', 'साहिलच्या फॅमिलीविषयी'
     ]
-    if any(sf in q_lower for sf in sahil_fam_kw) or (('family' in q_lower or 'फॅमिली' in q_lower or 'कुटुंब' in q_lower) and any(w in q_lower for w in ['sahil', 'साहिल', 'vishayi', 'विषयी', 'बद्दल', 'सांग'])):
+    if any(sf in q_lower for sf in sahil_fam_kw) or (('family' in q_lower or 'फॅमिली' in q_lower or 'कुटुंब' in q_lower) and any(w in q_lower for w in ['sahil', 'साहिल'])):
         if target_lang == 'mr':
             return (
                 "👨‍👩‍👦 **साहिल यांचे कुटुंब (Sahil's Family):**\n"
