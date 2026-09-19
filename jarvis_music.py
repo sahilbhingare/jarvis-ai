@@ -69,64 +69,82 @@ def search_music_tracks(query: str, max_candidates: int = 4) -> list:
         return MUSIC_CACHE[cache_key]
 
     vids = []
+
+    # Primary: use yt-dlp for accurate, exact song search
     try:
-        url = f"https://www.youtube.com/results?search_query={urllib.parse.quote(cleaned + ' song')}"
-        headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-            'Accept-Language': 'en-US,en;q=0.9,mr;q=0.8,hi;q=0.7'
+        import yt_dlp
+        search_query = cleaned + ' official audio'
+        ydl_opts = {
+            'quiet': True,
+            'no_warnings': True,
+            'extract_flat': True,  # Fast — only metadata, no download
+            'default_search': f'ytsearch{max_candidates}',
         }
-        res = requests.get(url, headers=headers, timeout=5)
-        if res.status_code == 200:
-            m = re.search(r'var ytInitialData = ({.*?});</script>', res.text)
-            if m:
-                try:
-                    data = json.loads(m.group(1))
-                    contents = data.get('contents', {}).get('twoColumnSearchResultsRenderer', {}).get('primaryContents', {}).get('sectionListRenderer', {}).get('contents', [])
-                    for section in contents:
-                        item_section = section.get('itemSectionRenderer', {}).get('contents', [])
-                        for item in item_section:
-                            if 'videoRenderer' in item:
-                                vr = item['videoRenderer']
-                                vid = vr.get('videoId')
-                                title = vr.get('title', {}).get('runs', [{}])[0].get('text', '')
-                                length = vr.get('lengthText', {}).get('simpleText', '')
-                                owner = vr.get('ownerText', {}).get('runs', [{}])[0].get('text', '')
-                                thumbs = vr.get('thumbnail', {}).get('thumbnails', [])
-                                thumb = thumbs[-1]['url'] if thumbs else f"https://img.youtube.com/vi/{vid}/hqdefault.jpg"
-                                
-                                if vid and title and len(vid) == 11:
-                                    vids.append({
-                                        'id': vid,
-                                        'title': title,
-                                        'duration': length or 'HD',
-                                        'channel': owner or 'Official Music',
-                                        'thumbnail': thumb
-                                    })
-                                if len(vids) >= max_candidates:
-                                    break
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            result = ydl.extract_info(search_query, download=False)
+            entries = result.get('entries', []) if result else []
+            for entry in entries:
+                vid = entry.get('id') or entry.get('url', '')
+                title = entry.get('title', cleaned.title())
+                duration_secs = entry.get('duration')
+                if duration_secs:
+                    mins, secs = divmod(int(duration_secs), 60)
+                    duration = f"{mins}:{secs:02d}"
+                else:
+                    duration = 'HD'
+                channel = entry.get('channel') or entry.get('uploader') or 'Official Music'
+                thumb = f"https://img.youtube.com/vi/{vid}/hqdefault.jpg"
+                if vid and len(vid) == 11:
+                    vids.append({'id': vid, 'title': title, 'duration': duration, 'channel': channel, 'thumbnail': thumb})
+        print(f"[MUSIC ENGINE] yt-dlp found {len(vids)} results for: {search_query}")
+    except Exception as e:
+        print(f"[MUSIC ENGINE] yt-dlp search failed, falling back to scrape: {e}")
+
+    # Fallback: old YouTube HTML scraping
+    if not vids:
+        try:
+            url = f"https://www.youtube.com/results?search_query={urllib.parse.quote(cleaned + ' song')}"
+            headers = {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                'Accept-Language': 'en-US,en;q=0.9,mr;q=0.8,hi;q=0.7'
+            }
+            res = requests.get(url, headers=headers, timeout=5)
+            if res.status_code == 200:
+                m = re.search(r'var ytInitialData = ({.*?});</script>', res.text)
+                if m:
+                    try:
+                        data = json.loads(m.group(1))
+                        contents = data.get('contents', {}).get('twoColumnSearchResultsRenderer', {}).get('primaryContents', {}).get('sectionListRenderer', {}).get('contents', [])
+                        for section in contents:
+                            item_section = section.get('itemSectionRenderer', {}).get('contents', [])
+                            for item in item_section:
+                                if 'videoRenderer' in item:
+                                    vr = item['videoRenderer']
+                                    vid = vr.get('videoId')
+                                    title = vr.get('title', {}).get('runs', [{}])[0].get('text', '')
+                                    length = vr.get('lengthText', {}).get('simpleText', '')
+                                    owner = vr.get('ownerText', {}).get('runs', [{}])[0].get('text', '')
+                                    thumbs = vr.get('thumbnail', {}).get('thumbnails', [])
+                                    thumb = thumbs[-1]['url'] if thumbs else f"https://img.youtube.com/vi/{vid}/hqdefault.jpg"
+                                    if vid and title and len(vid) == 11:
+                                        vids.append({'id': vid, 'title': title, 'duration': length or 'HD', 'channel': owner or 'Official Music', 'thumbnail': thumb})
+                                    if len(vids) >= max_candidates:
+                                        break
+                            if len(vids) >= max_candidates:
+                                break
+                    except Exception as ex:
+                        print(f"[MUSIC ENGINE] ytInitialData parse error: {ex}")
+                if not vids:
+                    raw_vids = re.findall(r'"videoId":"([a-zA-Z0-9_-]{11})"', res.text)
+                    seen = set()
+                    for v in raw_vids:
+                        if v not in seen:
+                            seen.add(v)
+                            vids.append({'id': v, 'title': cleaned.title(), 'duration': 'HD', 'channel': 'YouTube Music', 'thumbnail': f"https://img.youtube.com/vi/{v}/hqdefault.jpg"})
                         if len(vids) >= max_candidates:
                             break
-                except Exception as ex:
-                    print(f"[MUSIC ENGINE] ytInitialData parse error: {ex}")
-
-            # Fallback regex extraction if structured parse did not yield candidates
-            if not vids:
-                raw_vids = re.findall(r'"videoId":"([a-zA-Z0-9_-]{11})"', res.text)
-                seen = set()
-                for v in raw_vids:
-                    if v not in seen:
-                        seen.add(v)
-                        vids.append({
-                            'id': v,
-                            'title': cleaned.title(),
-                            'duration': 'HD',
-                            'channel': 'YouTube Music',
-                            'thumbnail': f"https://img.youtube.com/vi/{v}/hqdefault.jpg"
-                        })
-                    if len(vids) >= max_candidates:
-                        break
-    except Exception as e:
-        print(f"[MUSIC ENGINE] Search request error: {e}")
+        except Exception as e:
+            print(f"[MUSIC ENGINE] Scrape fallback error: {e}")
 
     # Fallback to predefined top hits if network fails or search returns empty
     if not vids:
