@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="mr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>J.A.R.V.I.S. // AI Voice Assistant (मराठी, हिंदी, English)</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <!-- Fonts & Icons -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800;900&family=Rajdhani:wght@400;500;600;700&family=Yantramanav:wght@400;500;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <!-- Three.js for 3D Holographic Arc Reactor -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+</head>
+<body>
+    <div class="hud-container">
+        <!-- Background Grid & Glows -->
+        <div class="cyber-grid"></div>
+        <div class="glow-orb top-left"></div>
+        <div class="glow-orb bottom-right"></div>
+
+        <!-- Top Header HUD -->
+        <header class="hud-header">
+            <div class="header-left">
+                <div class="reactor-icon-small">
+                    <div class="core-mini"></div>
+                </div>
+                <div class="brand">
+                    <h1>J.A.R.V.I.S.</h1>
+                    <span class="sub-brand">AI VOICE ASSISTANT • VER 3.0 MULTILINGUAL</span>
+                </div>
+            </div>
+
+            <div class="header-center">
+                <div class="status-pill">
+                    <span class="pulse-dot"></span>
+                    <span id="systemStatus">SYSTEMS NOMINAL</span>
+                </div>
+                <div class="status-pill ai-engine">
+                    <i class="fa-solid fa-brain"></i>
+                    <span id="aiEngineLabel">GEMINI AI + KNOWLEDGE BASE</span>
+                </div>
+                <!-- Wake Word Status: Always Active 24x7 (Direct Hey Jarvis) -->
+                <div class="status-pill wake-word-pill active" id="wakeWordBtn" title="'Hey Jarvis' थेट बोला - २४x७ नेहमी सक्रिय (Direct Voice Active)">
+                    <span class="wake-dot"></span>
+                    <span id="wakeWordLabel">⚡ 'HEY JARVIS' २४x७ चालू (ALWAYS ACTIVE)</span>
+                </div>
+                <!-- Live Hardware Telemetry HUD -->
+                <div class="status-pill telemetry-pill" id="telemetryPill" title="सिस्टम बॅटरी व CPU वापर">
+                    <span class="tel-item"><i class="fa-solid fa-battery-half" id="batteryIcon"></i> <span id="batteryPct">--%</span></span>
+                    <span class="tel-sep">•</span>
+                    <span class="tel-item"><i class="fa-solid fa-microchip"></i> <span id="cpuPct">CPU --%</span></span>
+                </div>
+            </div>
+
+            <div class="header-right">
+                <!-- Theme Switcher Dots -->
+                <div class="theme-switcher-bar" title="थीम बदला (Change Theme)">
+                    <button type="button" class="theme-btn-dot dot-saffron" data-theme="saffron" title="🚩 स्वराज्य भगवा"></button>
+                    <button type="button" class="theme-btn-dot dot-cyan active" data-theme="cyan" title="🔷 आयर्न मॅन सायन"></button>
+                    <button type="button" class="theme-btn-dot dot-matrix" data-theme="matrix" title="🟢 मॅट्रिक्स ग्रीन"></button>
+                    <button type="button" class="theme-btn-dot dot-purple" data-theme="purple" title="🟣 डार्क ॲमेथिस्ट"></button>
+                </div>
+                <div class="time-display" id="hudTime">--:--:--</div>
+                <!-- Personality Selector Dropdown -->
+                <div class="persona-box" title="जार्व्हिस व्यक्तिमत्व (Personality Switcher)">
+                    <i class="fa-solid fa-masks-theater persona-icon"></i>
+                    <select id="personaSelect" class="persona-select">
+                        <option value="ironman" selected>🤖 Iron Man</option>
+                        <option value="mavala">🚩 स्वराज्य मावळा</option>
+                        <option value="casual">🤝 कॅज्युअल मित्र</option>
+                    </select>
+                </div>
+                <!-- Sound FX Toggle Button -->
+                <button class="icon-btn active" id="sfxToggleBtn" title="साय-फाय साऊंड इफेक्ट्स (Sound FX) चालू/बंद करा">
+                    <i class="fa-solid fa-volume-high"></i>
+                </button>
+                <!-- Mobile Connect Wi-Fi Remote Button -->
+                <button class="icon-btn" id="mobileRemoteBtn" title="मोबाईल Wi-Fi रिमोट कंट्रोल (Mobile Connect)">
+                    <i class="fa-solid fa-mobile-screen-button"></i>
+                </button>
+                <button class="icon-btn" id="notesModalBtn" title="View Notes & Reminders">
+                    <i class="fa-solid fa-clipboard-list"></i>
+                </button>
+                <button class="icon-btn" id="settingsBtn" title="Settings / API Key">
+                    <i class="fa-solid fa-gear"></i>
+                </button>
+            </div>
+        </header>
+
+        <!-- Main Content: Left HUD & Right HUD -->
+        <main class="hud-main">
+            <!-- Left Panel: Arc Reactor & Voice Visualizer -->
+            <section class="reactor-panel">
+                <!-- Reactor 2D/3D Mode Switcher -->
+                <div class="reactor-mode-bar">
+                    <button type="button" class="reactor-mode-btn active" id="btn2DReactor"><i class="fa-solid fa-atom"></i> 2D Arc Core</button>
+                    <button type="button" class="reactor-mode-btn" id="btn3DReactor"><i class="fa-solid fa-cube"></i> 3D Hologram</button>
+                </div>
+
+                <!-- 2D Classic Arc Reactor -->
+                <div class="reactor-wrapper" id="reactorWrapper2D">
+                    <div class="tech-ring ring-outer"></div>
+                    <div class="tech-ring ring-mid"></div>
+                    <div class="tech-ring ring-inner"></div>
+                    <div class="arc-core" id="arcCore" title="Click to Test Voice">
+                        <div class="core-pulse"></div>
+                        <i class="fa-solid fa-atom core-icon"></i>
+                    </div>
+                </div>
+
+                <!-- 3D Holographic Three.js Arc Reactor Canvas -->
+                <div class="three-container" id="threeContainer" style="display: none;">
+                    <canvas id="threeCanvas"></canvas>
+                </div>
+
+                <!-- Frequency Visualizer Canvas -->
+                <div class="visualizer-box">
+                    <canvas id="audioVisualizer"></canvas>
+                </div>
+
+                <!-- Live Voice State Indicator -->
+                <div class="voice-state-banner">
+                    <div class="state-icon">
+                        <i class="fa-solid fa-microphone-lines" id="micIconStatus"></i>
+                    </div>
+                    <div class="state-text">
+                        <span class="state-label">STATUS</span>
+                        <h3 id="statusMessage">मायक्रोफोनवर क्लिक करा किंवा बोला</h3>
+                    </div>
+                </div>
+
+
+
+            </section>
+
+            <!-- Right Panel: Holographic Terminal / Chat Log -->
+            <section class="terminal-panel">
+                <div class="terminal-header">
+                    <div class="term-title">
+                        <i class="fa-solid fa-terminal"></i>
+                        <span>COMMUNICATION LOG</span>
+                    </div>
+                    <div class="lang-selector">
+                        <label><i class="fa-solid fa-globe"></i> भाषा (Language):</label>
+                        <select id="langSelect">
+                            <option value="mr" selected>🚩 मराठी (Marathi)</option>
+                            <option value="hi">🇮🇳 हिंदी (Hindi)</option>
+                            <option value="en">🌐 English (UK/US)</option>
+                        </select>
+                    </div>
+                    <button class="clear-btn" id="clearLogBtn" title="Clear Log">
+                        <i class="fa-solid fa-trash-can"></i>
+                    </button>
+                </div>
+
+                <!-- Chat Messages Scroll Container -->
+                <div class="chat-log" id="chatLog">
+                    <!-- Welcome message from Jarvis -->
+                    <div class="message-card jarvis-card">
+                        <div class="msg-header">
+                            <div class="speaker-tag">
+                                <i class="fa-solid fa-robot"></i> J.A.R.V.I.S.
+                            </div>
+                            <span class="timestamp" id="welcomeTime"></span>
+                        </div>
+                        <div class="msg-body" id="welcomeMsgBody">
+                            नमस्कार सर! मी <strong>जार्व्हिस (J.A.R.V.I.S.)</strong> आहे. सर्व सिस्टीम्स १००% ऑनलाईन आहेत.<br><br>
+                            तुम्ही मला <strong>मराठी, हिंदी किंवा इंग्रजी</strong> मध्ये काहीही विचारू शकता. मी आवाज आणि मजकुराच्या स्वरूपात अचूक उत्तर देईन!<br><br>
+                            <em>विशेष: छत्रपती शिवाजी महाराज, महाराष्ट्राचे गड-किल्ले, सनातन हिंदू धर्म किंवा ताज्या बातम्या, व्हॉल्यूम, स्क्रीनशॉट यासाठी थेट बोला.</em> 🚩🕉️
+                        </div>
+                        <div class="msg-actions">
+                            <button class="replay-btn" id="welcomeVoiceBtn">
+                                <i class="fa-solid fa-volume-high"></i> पुन्हा ऐका
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bottom Input Controls -->
+                <div class="input-console">
+                    <!-- Image Preview Tray -->
+                    <div id="imagePreviewTray" class="image-preview-tray" style="display: none;">
+                        <div class="preview-content">
+                            <img id="imagePreviewImg" src="" alt="Preview">
+                            <span class="preview-text">📷 फोटो जोडला आहे</span>
+                            <button id="clearImageBtn" class="clear-img-btn" title="Remove Image">&times;</button>
+                        </div>
+                    </div>
+
+                    <div class="controls-row">
+                        <!-- Image Upload Button -->
+                        <button type="button" class="upload-trigger-btn" id="imageUploadBtn" title="फोटो अपलोड करा (Upload Image)">
+                            <i class="fa-solid fa-image"></i>
+                        </button>
+                        <input type="file" id="imageInput" accept="image/*" style="display: none;">
+
+                        <!-- Big Mic Trigger Button -->
+                        <button class="mic-trigger-btn" id="micBtn" title="Click to Speak">
+                            <i class="fa-solid fa-microphone"></i>
+                            <div class="mic-ripple"></div>
+                        </button>
+
+                        <!-- Text Input Form -->
+                        <form id="chatForm" class="text-input-form">
+                            <input 
+                                type="text" 
+                                id="textInput" 
+                                placeholder="येथे टाइप करा किंवा मायक्रोफोन चालू करा..." 
+                                autocomplete="off"
+                            >
+                            <button type="submit" id="sendBtn" class="send-btn" title="Send Message">
+                                <i class="fa-solid fa-paper-plane"></i>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- Hidden Audio Element for Voice Playback -->
+        <audio id="jarvisAudioPlayer" preload="auto"></audio>
+
+        <!-- Settings Modal (For Gemini API Key) -->
+        <div class="modal-overlay" id="settingsModal">
+            <div class="modal-card">
+                <div class="modal-header">
+                    <h2><i class="fa-solid fa-sliders"></i> JARVIS CONFIGURATION</h2>
+                    <button class="close-modal-btn" id="closeSettingsBtn">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <p class="modal-desc">
+                        जार्व्हिस डिफॉल्टनुसार स्मार्ट नॉलेज बेस आणि इंटरनेट सर्चवरून काम करतो. 
+                        अधिक प्रगत बुद्धिमत्तेसाठी तुम्ही <strong>Google Gemini API Key</strong> (मोफत) टाकू शकता.
+                    </p>
+                    <div class="form-group">
+                        <label for="apiKeyInput">Google Gemini API Key:</label>
+                        <input type="password" id="apiKeyInput" placeholder="AIzaSy...">
+                        <small>Key मिळवण्यासाठी: <a href="https://aistudio.google.com" target="_blank">Google AI Studio (Free)</a></small>
+                    </div>
+                    <div class="modal-actions">
+                        <button class="btn btn-secondary" id="cancelSettingsBtn">रद्द करा</button>
+                        <button class="btn btn-primary" id="saveSettingsBtn">सेव्ह करा</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Notes & Reminders Modal -->
+        <div class="modal-overlay" id="notesModal">
+            <div class="modal-card notes-card">
+                <div class="modal-header">
+                    <h2><i class="fa-solid fa-clipboard-check"></i> NOTES & REMINDERS</h2>
+                    <button class="close-modal-btn" id="closeNotesBtn">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="notes-section">
+                        <h3><i class="fa-solid fa-sticky-note"></i> सेव्ह केलेल्या नोट्स (Saved Notes)</h3>
+                        <div id="notesListContainer" class="items-list">
+                            <p class="empty-text">कोणतीही नोट उपलब्ध नाही.</p>
+                        </div>
+                    </div>
+                    <hr class="modal-divider">
+                    <div class="reminders-section">
+                        <h3><i class="fa-solid fa-bell"></i> सक्रिय रिमाइंडर्स (Active Reminders)</h3>
+                        <div id="remindersListContainer" class="items-list">
+                            <p class="empty-text">कोणताही सक्रिय रिमाइंड उपलब्ध नाही.</p>
+                        </div>
+                    </div>
+                    <div class="modal-actions">
+                        <button class="btn btn-secondary" id="clearAllNotesBtn">सर्व नोट्स पुसा</button>
+                        <button class="btn btn-primary" id="refreshNotesBtn">रिफ्रेश करा</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mobile Wi-Fi Remote Modal -->
+        <div class="modal-overlay" id="mobileModal">
+            <div class="modal-card mobile-connect-card">
+                <div class="modal-header">
+                    <h2><i class="fa-solid fa-mobile-screen-button"></i> MOBILE WI-FI REMOTE</h2>
+                    <button class="close-modal-btn" id="closeMobileBtn">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <p class="modal-desc">
+                        तुम्ही तुमच्या <strong>मोबाईलच्या ब्राउझरवरून (Chrome / Safari)</strong> पीसीवरील जार्व्हिस थेट नियंत्रित करू शकता! मोबाईल व लॅपटॉप एकाच Wi-Fi नेटवर्कवर असल्याची खात्री करा.
+                    </p>
+                    <div class="ip-info-box">
+                        <div class="ip-label">📱 मोबाईलवर ही लिंक उघडा:</div>
+                        <div class="ip-link-row">
+                            <span id="mobileIpDisplay" class="mobile-ip-text">लोड होत आहे...</span>
+                            <button type="button" class="btn btn-secondary btn-sm" id="copyIpBtn" title="Copy Link"><i class="fa-solid fa-copy"></i> कॉपी</button>
+                        </div>
+                    </div>
+                    <div class="mobile-features-list">
+                        <h4><i class="fa-solid fa-wand-magic-sparkles"></i> मोबाईलवरून काय करू शकता?</h4>
+                        <ul>
+                            <li>🎵 बेडवर बसून मोबाईलमध्ये बोलून लॅपटॉपवर कोणतीही गाणी लावणे.</li>
+                            <li>🔊 लांबून लॅपटॉपचा आवाज वाढवणे, कमी करणे किंवा म्यूट करणे.</li>
+                            <li>☀️ "सुप्रभात जार्व्हिस" म्हणून संपूर्ण दिवसाचा ऑडिओ आढावा ऐकणे.</li>
+                            <li>🔒 लॅपटॉप स्क्रीन लॉक करणे, स्लीप करणे किंवा स्क्रीनशॉट घेणे.</li>
+                        </ul>
+                    </div>
+                    <div class="modal-actions">
+                        <button class="btn btn-primary" id="closeMobileModalBtn">उत्तम (Close)</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Script -->
+    <script src="/static/js/jarvis.js"></script>
+</body>
+</html>

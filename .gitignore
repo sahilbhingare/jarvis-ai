@@ -1,0 +1,11 @@
+# JARVIS AI - Git Ignore
+.env
+__pycache__/
+*.pyc
+.vscode/
+
+# Private Data & Screenshots
+static/screenshots/
+data/notes.json
+data/reminders.json
+*.log
