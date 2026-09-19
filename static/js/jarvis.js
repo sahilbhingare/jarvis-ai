@@ -72,9 +72,19 @@ document.addEventListener('DOMContentLoaded', () => {
     // Unlock browser audio upon first click or touch anywhere on the page
     function unlockAudio() {
         getAudioContext();
-        if (jarvisAudioPlayer) {
+        if (jarvisAudioPlayer && !window.audioUnlocked) {
             jarvisAudioPlayer.volume = 1.0;
             jarvisAudioPlayer.muted = false;
+            // Safari/Mobile hack: attempt to play a silent/empty track to whitelist the element
+            let p = jarvisAudioPlayer.play();
+            if (p !== undefined) {
+                p.then(() => {
+                    jarvisAudioPlayer.pause();
+                }).catch(e => {
+                    // Expected to throw error if src is empty, but it still unlocks!
+                });
+            }
+            window.audioUnlocked = true;
         }
     }
     document.addEventListener('click', unlockAudio, { once: false });
