@@ -1507,6 +1507,20 @@ def handle_action(text: str, lang: str = 'mr') -> tuple[bool, str]:
             return True, "वह **साहिल का दोस्त (मित्र)** है, सर! 🤝"
         return True, "He is **Sahil's friend**, Sir! 🤝"
 
+    # 0.1.06 🧑‍🤝‍🧑 Special Recognition: Kartik Mohite
+    kartik_triggers = [
+        'kartik mohite', 'kartik', 'कार्तिक मोहिते', 'कार्तिक',
+        'kartik kon', 'kartik kon aahe', 'kartik kon ahe', 'kartik kaun', 'who is kartik',
+        'कार्तिक कोण', 'कार्तिक कोण आहे', 'कार्तिक कोण आहेत', 'kartik badal', 'कार्तिक बद्दल',
+        'kartik vishayi', 'कार्तिक विषयी'
+    ]
+    if any(kt in raw for kt in kartik_triggers):
+        if lang == 'mr':
+            return True, "तो **साहिलचा मित्र (फ्रेंड)** आहे, सर! 🤝"
+        elif lang == 'hi':
+            return True, "वह **साहिल का दोस्त (मित्र)** है, सर! 🤝"
+        return True, "He is **Sahil's friend**, Sir! 🤝"
+
 
     # 0.1.1 👨‍👩‍👦 Special Recognition: Sahil's Family (वडील: अशोक भिंगारे, आई: सुनीता, भाऊ: रोहन)
     sahil_family_triggers = [

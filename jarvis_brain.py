@@ -731,6 +731,7 @@ def ask_gemini(query: str, target_lang: str = 'mr', session_id: str = 'default',
             f"Special Fact about Sahil's Family: Ashok Bhingare (अशोक भिंगारे) is Sahil's father (वडील). Sunita (सुनीता) is Sahil's mother (आई). Rohan (रोहन) is Sahil's brother (भाऊ). Whenever asked about Sahil's family, father, mother, or brother, state these facts respectfully. "
             f"Special Fact about Shubham: Shubham Kalamkar (शुभम कळमकर) is Sahil's (साहिल) best friend. If asked about Shubham Kalamkar, clearly state that he is Sahil's friend (तो साहिलचा फ्रेंड आहे). "
             f"Special Fact about Yogesh: Yogesh Bhasar (योगेश भासार) is Sahil's (साहिल) friend (मित्र). If asked about Yogesh Bhasar, clearly state that he is Sahil's friend (तो साहिलचा मित्र आहे). "
+            f"Special Fact about Kartik: Kartik Mohite (कार्तिक मोहिते) is Sahil's (साहिल) friend (मित्र). If asked about Kartik Mohite, clearly state that he is Sahil's friend (तो साहिलचा मित्र आहे). "
             f"If asked about Chhatrapati Shivaji Maharaj, Forts of Maharashtra, or Sanatan Hindu Dharma, answer with utmost reverence and depth."
         )
 
@@ -975,6 +976,20 @@ def get_answer(query: str, lang: str = 'mr', session_id: str = 'default', image:
         'yogesh vishayi', 'योगेश विषयी'
     ]
     if any(yk in q_lower for yk in yogesh_kw):
+        if target_lang == 'mr':
+            return "तो **साहिलचा मित्र (फ्रेंड)** आहे, सर! 🤝"
+        elif target_lang == 'hi':
+            return "वह **साहिल का दोस्त (मित्र)** है, सर! 🤝"
+        return "He is **Sahil's friend**, Sir! 🤝"
+
+    # 0.1.06 🧑‍🤝‍🧑 Check "कार्तिक मोहिते" Intent
+    kartik_kw = [
+        'kartik mohite', 'kartik', 'कार्तिक मोहिते', 'कार्तिक',
+        'kartik kon', 'kartik kon aahe', 'kartik kon ahe', 'kartik kaun', 'who is kartik',
+        'कार्तिक कोण', 'कार्तिक कोण आहे', 'कार्तिक कोण आहेत', 'kartik badal', 'कार्तिक बद्दल',
+        'kartik vishayi', 'कार्तिक विषयी'
+    ]
+    if any(kk in q_lower for kk in kartik_kw):
         if target_lang == 'mr':
             return "तो **साहिलचा मित्र (फ्रेंड)** आहे, सर! 🤝"
         elif target_lang == 'hi':
