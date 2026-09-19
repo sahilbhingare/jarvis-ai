@@ -1006,6 +1006,24 @@ def change_theme(theme_text: str, lang: str = 'mr') -> str:
         return f"मैंने जार्विस की थीम **'{theme_title}'** कर दी है, सर! 🎨✨\n\n[CHANGE_THEME:{theme_code}]"
     return f"Switching interface theme to **'{theme_title}'**, Sir! 🎨✨\n\n[CHANGE_THEME:{theme_code}]"
 
+def search_image_link(query: str, lang: str = 'mr') -> str:
+    import urllib.parse
+    clean = query.lower()
+    for w in ['photo dakhaw', 'photo dakhav', 'image dakhaw', 'image dakhav', 'photo de', 'image de', 'picture dakhaw', 'pic dakhaw', 'फोटो दाखव', 'चित्र दाखव', 'फोटो दे', 'photo', 'image', 'picture', 'pic', 'फोटो', 'चित्र', 'of', 'show me', 'search']:
+        clean = clean.replace(w, '')
+    clean = clean.strip()
+    if not clean:
+        clean = "beautiful wallpaper"
+        
+    encoded_query = urllib.parse.quote(clean)
+    google_link = f"https://www.google.com/search?tbm=isch&q={encoded_query}"
+    
+    if lang == 'mr':
+        return f"सर, मी **'{clean}'** चे फोटो शोधले आहेत. पाहण्यासाठी या लिंकवर क्लिक करा: [येथे क्लिक करा]({google_link})"
+    elif lang == 'hi':
+        return f"सर, मैंने **'{clean}'** की तस्वीरें खोज ली हैं। देखने के लिए यहाँ क्लिक करें: [यहाँ क्लिक करें]({google_link})"
+    return f"Sir, I have found images for **'{clean}'**. You can view them here: [Click Here]({google_link})"
+
 def get_morning_briefing(lang: str = 'mr') -> str:
     """Delivers an inspirational and informative morning briefing."""
     date_str = get_current_date(lang)

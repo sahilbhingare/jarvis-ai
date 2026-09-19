@@ -941,6 +941,11 @@ def get_answer(query: str, lang: str = 'mr', session_id: str = 'default', image:
             from jarvis_music import play_music
             return play_music(clean_q, target_lang)
 
+    # 0.0.5 🖼️ Check Image/Photo Search Intent
+    image_triggers = ['photo dakhaw', 'photo dakhav', 'image dakhaw', 'image dakhav', 'photo de', 'image de', 'picture dakhaw', 'pic dakhaw', 'फोटो दाखव', 'चित्र दाखव', 'फोटो दे', 'photo', 'image', 'picture', 'pic', 'फोटो', 'चित्र']
+    if any(it in q_lower for it in image_triggers):
+        from jarvis_actions import search_image_link
+        return search_image_link(clean_q, target_lang)
 
     # 0. 🚩 Check "जय श्री राम" / "जय श्रीराम" Intent
     ram_triggers = ['जय श्री राम', 'जय श्रीराम', 'jai shree ram', 'jay shree ram', 'jai shri ram', 'jay shri ram', 'shree ram', 'shri ram', 'ram ram', 'राम राम']
