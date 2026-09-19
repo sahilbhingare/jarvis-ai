@@ -32,7 +32,7 @@ app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', os.urandom(24).hex())
 
 
 
-MAINTENANCE_MODE = False  # Set to False to open the website
+MAINTENANCE_MODE = True  # Set to False to open the website
 
 @app.route('/')
 def index():
