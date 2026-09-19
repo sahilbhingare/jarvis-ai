@@ -5,7 +5,8 @@ import psutil
 import requests
 import threading
 import time
-from flask import Flask, render_template, request, jsonify, send_from_directory, Response, stream_with_context
+import urllib.parse
+from flask import Flask, render_template, request, jsonify, send_from_directory, Response, stream_with_context, send_file
 from dotenv import load_dotenv
 
 if sys.stdout and hasattr(sys.stdout, 'reconfigure'):
@@ -143,8 +144,10 @@ def chat():
         aarti_type = None
         is_stop = True
     else:
-        # 3. Generate Neural Voice MP3 for normal Jarvis responses
-        audio_url = speak_sync(final_text, preferred_lang=lang)
+        # 3. Generate Neural Voice MP3 asynchronously via the new TTS endpoint
+        # The frontend will fetch this URL, allowing the text to be displayed instantly
+        encoded_text = urllib.parse.quote(final_text)
+        audio_url = f"/api/tts?text={encoded_text}&lang={lang}"
         is_aarti = False
         aarti_type = None
         is_stop = False
@@ -165,6 +168,27 @@ def chat():
         'lang': lang,
         'session_id': session_id
     })
+
+# -------------------------------------------------------------
+# 🎤 Dynamic TTS Endpoint (Reduces Chat Latency)
+# -------------------------------------------------------------
+@app.route('/api/tts', methods=['GET'])
+def tts_stream():
+    text = request.args.get('text', '').strip()
+    lang = request.args.get('lang', 'mr').strip()
+    
+    if not text:
+        return '', 400
+        
+    audio_path_url = speak_sync(text, preferred_lang=lang)
+    
+    if audio_path_url and audio_path_url.startswith('/static/audio/'):
+        filename = audio_path_url.replace('/static/audio/', '')
+        filepath = os.path.join(app.root_path, 'static', 'audio', filename)
+        if os.path.exists(filepath):
+            return send_file(filepath, mimetype='audio/mpeg')
+            
+    return '', 500
 
 # -------------------------------------------------------------
 # 🎵 In-Page Music Direct Audio Stream Proxy (100% Zero Redirect & Error 150 Bypass)
