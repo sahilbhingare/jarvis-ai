@@ -3635,10 +3635,18 @@ body[data-theme="purple"] {
     .hud-container {
         padding: 5px;
         overflow-x: hidden;
+        overflow-y: auto;
+        height: 100dvh;
+    }
+    .hud-main {
+        display: flex;
+        flex-direction: column;
+        height: auto;
     }
     .terminal-panel {
         margin-top: 10px;
-        height: 60vh;
+        height: auto;
+        min-height: 50vh;
         border-radius: 10px;
     }
     .chat-log {

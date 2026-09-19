@@ -31,8 +31,12 @@ app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', os.urandom(24).hex())
 
 
 
+MAINTENANCE_MODE = True  # Set to False to open the website
+
 @app.route('/')
 def index():
+    if MAINTENANCE_MODE:
+        return render_template('maintenance.html')
     return render_template('index.html')
 
 # -------------------------------------------------------------
@@ -40,6 +44,9 @@ def index():
 # -------------------------------------------------------------
 @app.route('/api/chat', methods=['POST'])
 def chat():
+    if MAINTENANCE_MODE:
+        return jsonify({'status': 'error', 'message': 'Website is closed. J.A.R.V.I.S. is offline.'}), 503
+        
     data = request.get_json() or {}
     message = data.get('message', '').strip()
     lang = data.get('lang', 'mr').strip()

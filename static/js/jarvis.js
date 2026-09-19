@@ -1725,7 +1725,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // -------------------------------------------------------------
     // 🎙️ "Hey Jarvis" Continuous Auto-Active Wake Word Engine (ALWAYS ON 24x7)
     // -------------------------------------------------------------
-    let wakeWordEnabled = true; // Always ACTIVE by default! Never needs manual activation
+    let wakeWordEnabled = false; // Disabled by default to prevent continuous mic switching and audio blocking on mobile
     let wakeWordRecognition = null;
     let wakeWordActive = false;
     let wakeDebounceTimer = null;
@@ -1738,7 +1738,7 @@ document.addEventListener('DOMContentLoaded', () => {
         wakeWordBtn.classList.add('active');
     }
     if (wakeWordLabel) {
-        wakeWordLabel.textContent = "⚡ 'HEY JARVIS' २४x७ चालू (ALWAYS ACTIVE)";
+        wakeWordLabel.textContent = wakeWordEnabled ? "⚡ 'HEY JARVIS' २४x७ चालू (ALWAYS ACTIVE)" : "⚡ 'HEY JARVIS' बंद आहे (OFF)";
     }
 
     // Broad Multi-lingual Wake Word Pattern (English, Marathi, Hindi)
@@ -1853,13 +1853,26 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!document.hidden) ensureWakeWordActive();
     });
 
-    // Clicking the status badge gives instant voice feedback / trigger
+    // Clicking the status badge toggles the wake word functionality
     if (wakeWordBtn) {
+        if (!wakeWordEnabled) {
+            wakeWordBtn.classList.remove('active');
+        }
         wakeWordBtn.addEventListener('click', () => {
             unlockAudio();
-            playSfx('listen');
-            statusMessage.textContent = '⚡ वेक-वर्ड सक्रिय आहे! थेट "Hey Jarvis" किंवा आज्ञा बोला.';
-            safeStartListening();
+            wakeWordEnabled = !wakeWordEnabled;
+            if (wakeWordEnabled) {
+                wakeWordBtn.classList.add('active');
+                if (wakeWordLabel) wakeWordLabel.textContent = "⚡ 'HEY JARVIS' २४x७ चालू (ALWAYS ACTIVE)";
+                statusMessage.textContent = '⚡ वेक-वर्ड चालू झाले आहे.';
+                ensureWakeWordActive();
+                playSfx('listen');
+            } else {
+                wakeWordBtn.classList.remove('active');
+                if (wakeWordLabel) wakeWordLabel.textContent = "⚡ 'HEY JARVIS' बंद आहे (OFF)";
+                statusMessage.textContent = '⚡ वेक-वर्ड बंद केले आहे.';
+                try { if (wakeWordRecognition) wakeWordRecognition.stop(); } catch(e) {}
+            }
         });
     }
 
