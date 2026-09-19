@@ -34,6 +34,15 @@ app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', os.urandom(24).hex())
 
 MAINTENANCE_MODE = False  # Set to False to open the website
 
+@app.after_request
+def add_no_cache_headers(response):
+    # Force fresh JS/CSS — never serve stale cached files
+    if request.path.startswith('/static/js/') or request.path.startswith('/static/css/'):
+        response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
+        response.headers['Pragma'] = 'no-cache'
+        response.headers['Expires'] = '0'
+    return response
+
 @app.route('/')
 def index():
     if MAINTENANCE_MODE:
