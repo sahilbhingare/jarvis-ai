@@ -577,7 +577,6 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     window.switchMusicCandidate = function(playerId, nextVid, encTitle, encChannel, encThumb) {
-        unlockAudio();
         const decodedTitle = decodeURIComponent(encTitle || 'Music Track');
         const decodedChannel = decodeURIComponent(encChannel || 'Artist');
         const decodedThumb = encThumb ? decodeURIComponent(encThumb) : `https://img.youtube.com/vi/${nextVid}/hqdefault.jpg`;
@@ -592,16 +591,12 @@ document.addEventListener('DOMContentLoaded', () => {
         if (mainTitleEl) mainTitleEl.textContent = decodedTitle;
         if (chEl) chEl.innerHTML = `<i class="fa-solid fa-compact-disc"></i> ${escapeHtml(decodedChannel)}`;
         if (thumbEl) thumbEl.src = decodedThumb;
-        if (iframe) iframe.setAttribute('data-src', `https://www.youtube-nocookie.com/embed/${nextVid}?autoplay=1&enablejsapi=1`);
 
-        const streamUrl = `/api/music/stream?v=${nextVid}`;
-        jarvisAudioPlayer.src = streamUrl;
-        jarvisAudioPlayer.play().then(() => {
-            window.updateMusicUI(true);
-            statusMessage.textContent = `🎵 आता वाजत आहे: ${decodedTitle}`;
-        }).catch(err => {
-            console.warn('Switch track stream play error:', err);
-        });
+        // Switch IFrame to new video
+        if (iframe) {
+            iframe.src = `https://www.youtube-nocookie.com/embed/${nextVid}?autoplay=1&enablejsapi=1&playsinline=1&rel=0&modestbranding=1`;
+        }
+        statusMessage.textContent = `🎵 आता वाजत आहे: ${decodedTitle}`;
     };
 
     window.toggleMusicVideo = function(playerId) {
@@ -957,18 +952,54 @@ document.addEventListener('DOMContentLoaded', () => {
                         </button>
                     </div>
 
-                    <div class="music-video-accordion" id="${playerId}_video_wrap" style="display: none;">
+                    <div class="music-video-accordion" id="${playerId}_video_wrap" style="display: block;">
                         <iframe id="${playerId}_iframe"
-                            data-src="https://www.youtube-nocookie.com/embed/${primary.id}?autoplay=1&enablejsapi=1&origin=${encodeURIComponent(window.location.origin)}&playsinline=1&rel=0"
-                            src=""
+                            src="https://www.youtube-nocookie.com/embed/${primary.id}?autoplay=1&enablejsapi=1&origin=${encodeURIComponent(window.location.origin)}&playsinline=1&rel=0&modestbranding=1"
                             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                            allowfullscreen>
+                            allowfullscreen
+                            style="width:100%;height:220px;border-radius:12px;border:none;">
                         </iframe>
                     </div>
 
                     ${altButtonsHtml}
                 </div>
             `;
+
+            // Wire up Play/Pause/Stop buttons to control YouTube IFrame via postMessage
+            setTimeout(() => {
+                const iframe = document.getElementById(playerId + '_iframe');
+                const playBtn = document.getElementById(playerId + '_play_btn');
+                const stopBtn = playBtn ? playBtn.closest('.music-player-controls-row').querySelector('.music-stop-btn') : null;
+
+                const ytCmd = (cmd) => {
+                    if (iframe && iframe.contentWindow) {
+                        iframe.contentWindow.postMessage(JSON.stringify({ event: 'command', func: cmd, args: [] }), '*');
+                    }
+                };
+
+                if (playBtn) {
+                    playBtn.onclick = () => {
+                        const icon = playBtn.querySelector('i');
+                        if (icon && icon.classList.contains('fa-pause')) {
+                            ytCmd('pauseVideo');
+                            icon.className = 'fa-solid fa-play';
+                            statusMessage.textContent = 'गाणे पॉज केले आहे. // PAUSED';
+                        } else {
+                            ytCmd('playVideo');
+                            if (icon) icon.className = 'fa-solid fa-pause';
+                            statusMessage.textContent = '🎵 गाणे वाजत आहे... // PLAYING';
+                        }
+                    };
+                }
+
+                if (stopBtn) {
+                    stopBtn.onclick = () => {
+                        ytCmd('stopVideo');
+                        if (playBtn) { const i = playBtn.querySelector('i'); if (i) i.className = 'fa-solid fa-play'; }
+                        statusMessage.textContent = 'गाणे थांबवले आहे. // STOPPED';
+                    };
+                }
+            }, 800);
         });
         
         // Inline YouTube Player Card (Legacy fallback)
