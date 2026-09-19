@@ -218,6 +218,26 @@
         <!-- Hidden Audio Element for Voice Playback -->
         <audio id="jarvisAudioPlayer" preload="auto"></audio>
 
+        <!-- Name Prompt Modal -->
+        <div class="modal-overlay" id="nameModal">
+            <div class="modal-card" style="max-width: 400px; text-align: center;">
+                <div class="modal-header" style="justify-content: center;">
+                    <h2><i class="fa-solid fa-user-astronaut"></i> ओळख सांगा (Welcome)</h2>
+                </div>
+                <div class="modal-body">
+                    <p class="modal-desc" style="margin-bottom: 15px;">
+                        जार्ह्विस (Jarvis) मध्ये आपले स्वागत आहे! जार्व्हिसने तुम्हाला कोणत्या नावाने हाक मारावी?
+                    </p>
+                    <div class="form-group">
+                        <input type="text" id="nameInput" placeholder="तुमचे नाव येथे लिहा..." style="width: 100%; text-align: center; padding: 10px; font-size: 16px; background: rgba(0,0,0,0.5); color: #0df; border: 1px solid #0df; border-radius: 5px;">
+                    </div>
+                </div>
+                <div class="modal-actions" style="justify-content: center;">
+                    <button class="btn btn-primary" id="submitNameBtn" style="width: 100%;">सेव्ह करा (Save)</button>
+                </div>
+            </div>
+        </div>
+
         <!-- Settings Modal (For Gemini API Key) -->
         <div class="modal-overlay" id="settingsModal">
             <div class="modal-card">
