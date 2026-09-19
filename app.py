@@ -25,8 +25,13 @@ from jarvis_actions import (
 from jarvis_brain import get_answer
 from jarvis_voice import generate_speech_file, speak_sync
 from jarvis_music import get_audio_stream_url
-
 app = Flask(__name__, static_folder='static', template_folder='templates')
+
+@app.before_request
+def check_maintenance():
+    if not request.path.startswith('/static/'):
+        return "<h1>वेबसाईट ५ मिनिटांसाठी बंद आहे. (Website is under maintenance for 5 minutes).</h1>", 503
+
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', os.urandom(24).hex())
 
 
