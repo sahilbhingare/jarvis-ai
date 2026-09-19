@@ -895,70 +895,41 @@ document.addEventListener('DOMContentLoaded', () => {
 
             return `
                 <div class="hud-music-player-card" id="${playerId}">
+                    <!-- Header: Title + Artist -->
                     <div class="music-card-header">
                         <div class="music-header-left">
                             <div class="music-equalizer-bars">
                                 <span></span><span></span><span></span><span></span>
                             </div>
                             <div class="music-meta-titles">
-                                <span class="music-now-playing">▶ आता वाजत आहे // DIRECT AUDIO STREAM</span>
+                                <span class="music-now-playing">▶ आता वाजत आहे // NOW PLAYING</span>
                                 <span class="music-track-title" id="${playerId}_title">${escapeHtml(safeTitle)}</span>
                             </div>
                         </div>
                         <div class="music-header-badges">
                             <span class="music-badge-artist" id="${playerId}_channel"><i class="fa-solid fa-compact-disc"></i> ${escapeHtml(safeChannel)}</span>
-                            <span class="music-badge-hd"><i class="fa-solid fa-shield-halved"></i> थेट स्पीकरवर</span>
+                            <span class="music-badge-hd"><i class="fa-brands fa-youtube" style="color:#ff0000;"></i> YouTube</span>
                         </div>
                     </div>
 
-                    <div class="music-banner-row">
-                        <div class="music-art-disc-wrap">
-                            <img class="music-thumb-img" id="${playerId}_thumb" src="${thumbUrl}" alt="${escapeHtml(safeTitle)}" />
-                            <div class="music-vinyl-disc spinning" id="${playerId}_disc">
-                                <div class="disc-center"><i class="fa-solid fa-music"></i></div>
-                            </div>
-                        </div>
-                        <div class="music-details-col">
-                            <div class="music-track-main-title" id="${playerId}_main_title">${escapeHtml(safeTitle)}</div>
-                            <div class="music-artist-sub"><i class="fa-solid fa-microphone-lines"></i> ${escapeHtml(safeChannel)}</div>
-                            <div class="music-duration-pill"><i class="fa-regular fa-clock"></i> <span id="${playerId}_dur">${primary.duration || 'HD'}</span> • HD Audio Engine</div>
-                        </div>
-                    </div>
-
-                    <div class="music-player-controls-row">
-                        <button type="button" class="music-play-pause-btn" id="${playerId}_play_btn" onclick="window.toggleMusicPlay('${playerId}')" title="प्ले / पॉज (Play/Pause)">
-                            <i class="fa-solid fa-pause"></i>
-                        </button>
-                        <div class="music-progress-wrapper">
-                            <span class="music-time music-current-time" id="${playerId}_curr">0:00</span>
-                            <input type="range" class="music-slider" id="${playerId}_slider" min="0" max="100" value="0" oninput="window.seekMusic(this.value)">
-                            <span class="music-time music-duration" id="${playerId}_tot">--:--</span>
-                        </div>
-                        <button type="button" class="music-ctrl-btn music-stop-btn" onclick="window.stopMusicTrack('${playerId}')" title="गाणे पूर्ण थांबवा (Stop)">
-                            <i class="fa-solid fa-stop"></i>
-                        </button>
-                    </div>
-
-                    <div class="music-extra-row">
-                        <div class="music-volume-box">
-                            <i class="fa-solid fa-volume-high" style="color: var(--cyan-neon); font-size: 0.8rem;"></i>
-                            <input type="range" class="music-vol-slider" min="0" max="100" value="100" oninput="window.setMusicVolume(this.value)" title="आवाज (Volume)">
-                        </div>
-                        <div class="music-status-pill">
-                            <i class="fa-solid fa-circle-check" style="color: #00ffaa;"></i> Zero Redirect • Active
-                        </div>
-                        <button type="button" class="music-yt-toggle-btn" onclick="window.toggleMusicVideo('${playerId}')" title="अधिकृत YouTube व्हिडिओ पहा">
-                            <i class="fa-brands fa-youtube"></i> व्हिडिओ पहा
-                        </button>
-                    </div>
-
-                    <div class="music-video-accordion" id="${playerId}_video_wrap" style="display: block;">
+                    <!-- YouTube Video Player (main) -->
+                    <div style="margin: 10px 0; border-radius: 14px; overflow: hidden; box-shadow: 0 0 24px #00f2fe44;">
                         <iframe id="${playerId}_iframe"
                             src="https://www.youtube-nocookie.com/embed/${primary.id}?autoplay=1&enablejsapi=1&origin=${encodeURIComponent(window.location.origin)}&playsinline=1&rel=0&modestbranding=1"
                             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                             allowfullscreen
-                            style="width:100%;height:220px;border-radius:12px;border:none;">
+                            style="width:100%;height:260px;border:none;display:block;">
                         </iframe>
+                    </div>
+
+                    <!-- Simple controls: Pause / Stop -->
+                    <div class="music-player-controls-row" style="justify-content: center; gap: 16px;">
+                        <button type="button" class="music-play-pause-btn" id="${playerId}_play_btn" title="प्ले / पॉज">
+                            <i class="fa-solid fa-pause"></i>
+                        </button>
+                        <button type="button" class="music-ctrl-btn music-stop-btn" title="गाणे थांबवा (Stop)">
+                            <i class="fa-solid fa-stop"></i>
+                        </button>
                     </div>
 
                     ${altButtonsHtml}
