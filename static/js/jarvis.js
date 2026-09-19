@@ -1131,7 +1131,31 @@ document.addEventListener('DOMContentLoaded', () => {
             const currentPersona = document.getElementById('personaSelect') ? document.getElementById('personaSelect').value : 'ironman';
             let userName = localStorage.getItem('jarvis_user_name');
             if (!userName) {
-                userName = prompt("Welcome to Jarvis! What is your name? (तुमचे नाव सांगा):", "");
+                userName = await new Promise((resolve) => {
+                    const modal = document.getElementById('nameModal');
+                    const input = document.getElementById('nameInput');
+                    const submitBtn = document.getElementById('submitNameBtn');
+                    
+                    if (modal && input && submitBtn) {
+                        modal.classList.add('active');
+                        input.focus();
+                        
+                        const cleanup = () => {
+                            modal.classList.remove('active');
+                            submitBtn.removeEventListener('click', onSubmit);
+                        };
+                        
+                        const onSubmit = () => {
+                            cleanup();
+                            resolve(input.value || "Sir");
+                        };
+                        
+                        submitBtn.addEventListener('click', onSubmit);
+                    } else {
+                        resolve("Sir");
+                    }
+                });
+
                 if (userName && userName.trim()) {
                     userName = userName.trim();
                     localStorage.setItem('jarvis_user_name', userName);
