@@ -73,19 +73,21 @@ def search_music_tracks(query: str, max_candidates: int = 4) -> list:
     # Primary: use yt-dlp for accurate, exact song search
     try:
         import yt_dlp
-        search_query = cleaned + ' official audio'
+        search_query = f'ytsearch{max_candidates}:{cleaned} official audio'
         ydl_opts = {
             'quiet': True,
             'no_warnings': True,
-            'extract_flat': True,  # Fast — only metadata, no download
-            'default_search': f'ytsearch{max_candidates}',
+            'extract_flat': 'in_playlist',
+            'skip_download': True,
         }
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             result = ydl.extract_info(search_query, download=False)
             entries = result.get('entries', []) if result else []
             for entry in entries:
-                vid = entry.get('id') or entry.get('url', '')
-                title = entry.get('title', cleaned.title())
+                if not entry:
+                    continue
+                vid = entry.get('id') or ''
+                title = entry.get('title') or cleaned.title()
                 duration_secs = entry.get('duration')
                 if duration_secs:
                     mins, secs = divmod(int(duration_secs), 60)
@@ -96,7 +98,7 @@ def search_music_tracks(query: str, max_candidates: int = 4) -> list:
                 thumb = f"https://img.youtube.com/vi/{vid}/hqdefault.jpg"
                 if vid and len(vid) == 11:
                     vids.append({'id': vid, 'title': title, 'duration': duration, 'channel': channel, 'thumbnail': thumb})
-        print(f"[MUSIC ENGINE] yt-dlp found {len(vids)} results for: {search_query}")
+        print(f"[MUSIC ENGINE] yt-dlp found {len(vids)} results for: {cleaned}")
     except Exception as e:
         print(f"[MUSIC ENGINE] yt-dlp search failed, falling back to scrape: {e}")
 
