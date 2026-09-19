@@ -60,11 +60,15 @@ document.addEventListener('DOMContentLoaded', () => {
     // -------------------------------------------------------------
     let audioCtx = null;
     function getAudioContext() {
-        if (!audioCtx) {
-            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        }
-        if (audioCtx.state === 'suspended') {
-            audioCtx.resume();
+        try {
+            if (!audioCtx && (window.AudioContext || window.webkitAudioContext)) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioCtx && audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        } catch (e) {
+            console.warn('AudioContext not supported or failed to resume:', e);
         }
         return audioCtx;
     }
@@ -72,19 +76,23 @@ document.addEventListener('DOMContentLoaded', () => {
     // Unlock browser audio upon first click or touch anywhere on the page
     function unlockAudio() {
         getAudioContext();
-        if (jarvisAudioPlayer && !window.audioUnlocked) {
-            jarvisAudioPlayer.volume = 1.0;
-            jarvisAudioPlayer.muted = false;
-            // Safari/Mobile hack: attempt to play a silent/empty track to whitelist the element
-            let p = jarvisAudioPlayer.play();
-            if (p !== undefined) {
-                p.then(() => {
-                    jarvisAudioPlayer.pause();
-                }).catch(e => {
-                    // Expected to throw error if src is empty, but it still unlocks!
-                });
+        try {
+            if (jarvisAudioPlayer && !window.audioUnlocked) {
+                jarvisAudioPlayer.volume = 1.0;
+                jarvisAudioPlayer.muted = false;
+                // Safari/Mobile hack: attempt to play a silent/empty track to whitelist the element
+                let p = jarvisAudioPlayer.play();
+                if (p !== undefined) {
+                    p.then(() => {
+                        jarvisAudioPlayer.pause();
+                    }).catch(e => {
+                        // Expected to throw error if src is empty, but it still unlocks!
+                    });
+                }
+                window.audioUnlocked = true;
             }
-            window.audioUnlocked = true;
+        } catch (e) {
+            console.warn('Failed to unlock audio player:', e);
         }
     }
     document.addEventListener('click', unlockAudio, { once: false });
