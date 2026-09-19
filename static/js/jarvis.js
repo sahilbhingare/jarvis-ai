@@ -407,6 +407,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             };
 
+            const isMobile = /Android|iPhone|iPad|iPod|webOS/i.test(navigator.userAgent);
+
             // Resume AudioContext first, then play — bypasses browser autoplay policy
             const tryPlay = () => {
                 const playPromise = jarvisAudioPlayer.play();
@@ -422,7 +424,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             statusMessage.textContent = 'आरती प्ले करण्यासाठी खालील Play बटणावर क्लिक करा.';
                         } else if (isMusicTrack) {
                             updateMusicUI(false);
-                            statusMessage.textContent = 'गाणे प्ले करण्यासाठी खालील Play बटणावर क्लिक करा.';
+                            statusMessage.textContent = '▶ गाणे सुरू करण्यासाठी खालील Play ▶ बटण दाबा!';
                         } else {
                             speakWithBrowserSynthesis(fallbackText, lang);
                         }
@@ -430,11 +432,20 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             };
 
-            const actx = getAudioContext();
-            if (actx.state === 'suspended') {
-                actx.resume().then(tryPlay).catch(tryPlay);
+            // On mobile, just preload (set src + load) and let user tap Play button
+            // On desktop, try autoplay immediately
+            if (isMobile && isMusicTrack) {
+                jarvisAudioPlayer.load();
+                updateMusicUI(false);
+                statusMessage.textContent = '▶ गाणे सुरू करण्यासाठी Play ▶ बटण दाबा!';
+                isSpeaking = false;
             } else {
-                tryPlay();
+                const actx = getAudioContext();
+                if (actx.state === 'suspended') {
+                    actx.resume().then(tryPlay).catch(tryPlay);
+                } else {
+                    tryPlay();
+                }
             }
         } else if (fallbackText) {
             speakWithBrowserSynthesis(fallbackText, lang);
@@ -530,13 +541,19 @@ document.addEventListener('DOMContentLoaded', () => {
     window.toggleMusicPlay = function(playerId) {
         unlockAudio();
         if (!jarvisAudioPlayer) return;
+        // If paused OR readyState > 0 (preloaded but not started), try to play
         if (jarvisAudioPlayer.paused) {
             jarvisAudioPlayer.play().then(() => {
+                isSpeaking = true;
                 window.updateMusicUI(true);
                 statusMessage.textContent = '🎵 गाणे वाजत आहे... // PLAYING';
-            }).catch(e => console.warn('Music play error:', e));
+            }).catch(e => {
+                console.warn('Music play error:', e);
+                statusMessage.textContent = 'गाणे सुरू करण्यास अडचण आली. पुन्हा प्रयत्न करा.';
+            });
         } else {
             jarvisAudioPlayer.pause();
+            isSpeaking = false;
             window.updateMusicUI(false);
             statusMessage.textContent = 'गाणे पॉज केले आहे. // PAUSED';
         }
