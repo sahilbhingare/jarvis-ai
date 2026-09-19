@@ -1859,6 +1859,12 @@ document.addEventListener('DOMContentLoaded', () => {
             wakeWordBtn.classList.remove('active');
         }
         wakeWordBtn.addEventListener('click', () => {
+            const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+            if (isMobile) {
+                alert("Mobile Restriction: 'Always-On' microphone is disabled on mobile devices to prevent constant beeping and battery drain. Please use the blue microphone button below to speak.");
+                return;
+            }
+            
             unlockAudio();
             wakeWordEnabled = !wakeWordEnabled;
             if (wakeWordEnabled) {
