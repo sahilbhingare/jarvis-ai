@@ -192,6 +192,23 @@ def tts_stream():
 # -------------------------------------------------------------
 # 🎵 In-Page Music Direct Audio Stream Proxy (100% Zero Redirect & Error 150 Bypass)
 # -------------------------------------------------------------
+@app.route('/api/music/check', methods=['GET'])
+def music_check():
+    """Quick check if a YouTube video is embeddable."""
+    vid = request.args.get('v', '').strip()
+    if not vid or len(vid) != 11:
+        return jsonify({'embeddable': False}), 400
+    try:
+        import requests as req
+        r = req.get(
+            f'https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v={vid}&format=json',
+            timeout=4
+        )
+        return jsonify({'embeddable': r.status_code == 200})
+    except Exception:
+        return jsonify({'embeddable': True})  # assume ok if check fails
+
+
 @app.route('/api/music/stream', methods=['GET', 'HEAD'])
 def music_stream():
     """

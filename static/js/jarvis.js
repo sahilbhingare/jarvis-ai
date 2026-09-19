@@ -917,7 +917,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <!-- YouTube Player with tap-to-play overlay (Android autoplay fix) -->
                     <div style="position:relative; margin:10px 0; border-radius:14px; overflow:hidden; box-shadow:0 0 24px #00f2fe44;">
                         <!-- Thumbnail shown before play -->
-                        <div id="${playerId}_thumb_overlay" style="position:relative; cursor:pointer; background:#000;" onclick="window.startYTPlay('${playerId}', '${primary.id}')">
+                        <div id="${playerId}_thumb_overlay" style="position:relative; cursor:pointer; background:#000;" onclick="window.startYTPlay('${playerId}', '${primary.id}', ${JSON.stringify(tracks.slice(1).map(t=>t.id))})">
                             <img src="https://img.youtube.com/vi/${primary.id}/hqdefault.jpg"
                                 style="width:100%;height:220px;object-fit:cover;display:block;opacity:0.75;"
                                 alt="${escapeHtml(safeTitle)}" />
@@ -926,7 +926,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                 <div style="background:rgba(0,242,254,0.18);border:2.5px solid #00f2fe;border-radius:50%;width:72px;height:72px;display:flex;align-items:center;justify-content:center;box-shadow:0 0 32px #00f2fe88;">
                                     <i class="fa-solid fa-play" style="color:#00f2fe;font-size:2rem;margin-left:6px;"></i>
                                 </div>
-                                <div style="color:#fff;font-size:0.85rem;margin-top:10px;text-shadow:0 0 8px #000;गाणे सुरू करा">▶ गाणे सुरू करा</div>
+                                <div style="color:#fff;font-size:0.85rem;margin-top:10px;text-shadow:0 0 8px #000;">▶ गाणे सुरू करा</div>
                             </div>
                         </div>
                         <!-- IFrame loads only after tap -->
@@ -941,7 +941,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <!-- Controls -->
                     <div class="music-player-controls-row" style="justify-content:center;gap:16px;">
                         <button type="button" class="music-play-pause-btn" id="${playerId}_play_btn"
-                            onclick="window.startYTPlay('${playerId}', '${primary.id}')" title="गाणे सुरू करा">
+                            onclick="window.startYTPlay('${playerId}', '${primary.id}', ${JSON.stringify(tracks.slice(1).map(t=>t.id))})" title="गाणे सुरू करा">
                             <i class="fa-solid fa-play"></i>
                         </button>
                         <button type="button" class="music-ctrl-btn music-stop-btn"
@@ -955,21 +955,69 @@ document.addEventListener('DOMContentLoaded', () => {
             `;
         });
 
-        // startYTPlay: called on user tap — loads IFrame with autoplay (gesture-triggered, so allowed)
-        window.startYTPlay = function(playerId, vid) {
+        // startYTPlay: called on user tap — loads IFrame with autoplay
+        window.startYTPlay = function(playerId, vid, altVids) {
             const overlay = document.getElementById(playerId + '_thumb_overlay');
             const iframe = document.getElementById(playerId + '_iframe');
             const playBtn = document.getElementById(playerId + '_play_btn');
             if (!iframe) return;
+
+            // Store alt candidates on iframe for auto-fallback
+            if (altVids) iframe.setAttribute('data-alts', JSON.stringify(altVids));
+            iframe.setAttribute('data-vid', vid);
+
             const origin = encodeURIComponent(window.location.origin);
-            iframe.src = `https://www.youtube-nocookie.com/embed/${vid}?autoplay=1&enablejsapi=1&origin=${origin}&playsinline=1&rel=0&modestbranding=1`;
+            iframe.src = `https://www.youtube.com/embed/${vid}?autoplay=1&enablejsapi=1&origin=${origin}&playsinline=1&rel=0&modestbranding=1`;
             iframe.style.display = 'block';
             if (overlay) overlay.style.display = 'none';
             if (playBtn) {
                 playBtn.innerHTML = '<i class="fa-solid fa-pause"></i>';
                 playBtn.onclick = () => window.toggleYTPlay(playerId);
             }
-            statusMessage.textContent = '🎵 गाणे वाजत आहे... // PLAYING';
+            statusMessage.textContent = '🎵 गाणे लोड होत आहे...';
+
+            // Listen for YouTube player errors (video unavailable / embed blocked)
+            const onYTMsg = (event) => {
+                try {
+                    const msg = JSON.parse(event.data);
+                    // error code 150 = embed not allowed, 101 = same, 100 = not found
+                    if (msg.event === 'infoDelivery' && msg.info && msg.info.playerState !== undefined) {
+                        if (msg.info.playerState === -1 || msg.info.playerState === 5) {
+                            statusMessage.textContent = '🎵 गाणे वाजत आहे...';
+                        }
+                    }
+                    if (msg.event === 'infoDelivery' && msg.info && msg.info.errorCode) {
+                        // Video unavailable — try next alt
+                        window.removeEventListener('message', onYTMsg);
+                        window.ytSkipToAlt(playerId);
+                    }
+                } catch(e) {}
+            };
+            window.addEventListener('message', onYTMsg);
+
+            // Timeout fallback: if after 6s nothing played, try next
+            iframe._ytErrorTimer = setTimeout(() => {
+                // Check if video actually loaded by seeing if iframe doc has content
+                // Simple check: if still showing overlay src was bad
+                if (iframe.style.display === 'block') {
+                    window.removeEventListener('message', onYTMsg);
+                }
+            }, 6000);
+        };
+
+        window.ytSkipToAlt = function(playerId) {
+            const iframe = document.getElementById(playerId + '_iframe');
+            if (!iframe) return;
+            let alts = [];
+            try { alts = JSON.parse(iframe.getAttribute('data-alts') || '[]'); } catch(e) {}
+            if (alts.length > 0) {
+                const nextVid = alts.shift();
+                iframe.setAttribute('data-alts', JSON.stringify(alts));
+                statusMessage.textContent = 'आधीचा गाणे उपलब्ध नाही, दुसरे वाजवत आहे...';
+                window.startYTPlay(playerId, nextVid);
+            } else {
+                statusMessage.textContent = 'हे गाणे उपलब्ध नाही. वेगळे गाणे सांगा.';
+            }
         };
 
         window.toggleYTPlay = function(playerId) {
