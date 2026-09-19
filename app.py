@@ -46,11 +46,14 @@ def chat():
     persona = data.get('persona', 'ironman').strip()
     session_id = data.get('session_id', 'client-session-1').strip()
     image_b64 = data.get('image', None)
+    user_name = data.get('user_name', 'Sir').strip()
+    if not user_name:
+        user_name = 'Sir'
 
     if not message and not image_b64:
         return jsonify({'status': 'error', 'message': 'Empty query'}), 400
 
-    print(f"\n[JARVIS CHAT] Query: '{message}' | Lang: {lang} | Persona: {persona} | HasImage: {bool(image_b64)}")
+    print(f"\n[JARVIS CHAT] Query: '{message}' | Lang: {lang} | Persona: {persona} | HasImage: {bool(image_b64)} | User: {user_name}")
 
     # 1. Check if query triggers a system action (Volume, Screenshot, Lock, News, Notes, Reminders, Apps, YouTube, etc.)
     is_action, action_response = handle_action(message, lang)
@@ -62,7 +65,7 @@ def chat():
             final_text = f"🚩 जय भवानी! जय शिवाजी! {final_text}"
     else:
         # 2. Query Jarvis Brain (Shivaji Maharaj, Forts, Panchang, Hindu Dharma, Gemini AI, Wikipedia)
-        final_text = get_answer(message, lang, session_id=session_id, image=image_b64)
+        final_text = get_answer(message, lang, session_id=session_id, image=image_b64, user_name=user_name)
         if persona == 'mavala' and not any(k in final_text for k in ['🚩', '[MUSIC', '[WEATHER']):
             final_text = f"🚩 {final_text}"
         elif persona == 'casual' and not any(k in final_text for k in ['[MUSIC', '[WEATHER']):

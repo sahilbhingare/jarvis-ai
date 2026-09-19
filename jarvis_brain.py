@@ -697,7 +697,7 @@ def generate_offline_fallback(query: str, lang: str = 'mr') -> str:
 # -------------------------------------------------------------
 # 🤖 Google Gemini AI Integration (Strict Language Enforcement)
 # -------------------------------------------------------------
-def ask_gemini(query: str, target_lang: str = 'mr', session_id: str = 'default', image_b64: str = None) -> str:
+def ask_gemini(query: str, target_lang: str = 'mr', session_id: str = 'default', image_b64: str = None, user_name: str = 'Sir') -> str:
     api_key = os.getenv("GEMINI_API_KEY", "").strip()
     if not api_key:
         return ""
@@ -720,9 +720,10 @@ def ask_gemini(query: str, target_lang: str = 'mr', session_id: str = 'default',
         now = datetime.datetime.now()
         realtime_context = f"The EXACT real-time current date and time right now is: {now.strftime('%A, %d %B %Y, %I:%M:%S %p')}."
 
+        address_prompt = f"You address the user courteously as '{user_name}'." if user_name != 'Sir' else "You address the user courteously as 'Sir' or 'Boss'."
         system_instruction = (
             f"You are JARVIS, an ultra-intelligent, respectful, crisp and highly knowledgeable AI assistant like Iron Man's JARVIS. "
-            f"You address the user courteously as 'Sir' or 'Boss'. "
+            f"{address_prompt} "
             f"{lang_rule} "
             f"{realtime_context} "
             f"Answer ANY question the user asks with accurate facts, clarity and rich knowledge. "
@@ -784,7 +785,7 @@ def ask_gemini(query: str, target_lang: str = 'mr', session_id: str = 'default',
 # -------------------------------------------------------------
 # 🎯 Master Answer Coordinator (Multilingual Support)
 # -------------------------------------------------------------
-def get_answer(query: str, lang: str = 'mr', session_id: str = 'default', image: str = None) -> str:
+def get_answer(query: str, lang: str = 'mr', session_id: str = 'default', image: str = None, user_name: str = 'Sir') -> str:
     """
     Primary Jarvis Brain coordinator:
     Full trilingual support: Marathi ('mr'), Hindi ('hi'), and English ('en').
@@ -1124,7 +1125,7 @@ def get_answer(query: str, lang: str = 'mr', session_id: str = 'default', image:
 
     # 5. Try Gemini Generative AI (Strictly in target language)
     if not response and os.getenv("GEMINI_API_KEY", "").strip():
-        gemini_ans = ask_gemini(resolved_q, target_lang, session_id, image_b64=image)
+        gemini_ans = ask_gemini(resolved_q, target_lang, session_id, image_b64=image, user_name=user_name)
         if gemini_ans:
             response = gemini_ans
 

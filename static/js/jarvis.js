@@ -1129,6 +1129,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
         try {
             const currentPersona = document.getElementById('personaSelect') ? document.getElementById('personaSelect').value : 'ironman';
+            let userName = localStorage.getItem('jarvis_user_name');
+            if (!userName) {
+                userName = prompt("Welcome to Jarvis! What is your name? (तुमचे नाव सांगा):", "");
+                if (userName && userName.trim()) {
+                    userName = userName.trim();
+                    localStorage.setItem('jarvis_user_name', userName);
+                } else {
+                    userName = "Sir";
+                }
+            }
+
             const res = await fetch('/api/chat', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -1137,7 +1148,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     lang: langSelect.value,
                     persona: currentPersona,
                     session_id: 'browser-user-session',
-                    image: payloadImage
+                    image: payloadImage,
+                    user_name: userName
                 })
             });
 
