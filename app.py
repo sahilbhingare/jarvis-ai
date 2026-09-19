@@ -217,6 +217,15 @@ def music_stream():
         req_headers['Range'] = range_header
 
     try:
+        # Handle HEAD request quickly for Safari/Android metadata fetching
+        if request.method == 'HEAD':
+            upstream = requests.head(direct_url, headers=req_headers, timeout=12)
+            resp_headers = {}
+            for h in ['Content-Type', 'Content-Length', 'Accept-Ranges']:
+                val = upstream.headers.get(h)
+                if val: resp_headers[h] = val
+            return Response(status=upstream.status_code, headers=resp_headers)
+
         upstream = requests.get(direct_url, headers=req_headers, stream=True, timeout=12)
         
         def generate():

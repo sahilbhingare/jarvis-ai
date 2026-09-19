@@ -356,7 +356,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function playAudio(audioUrl, fallbackText = '', lang = 'mr') {
         unlockAudio();
 
-        if (audioUrl && (audioUrl.endsWith('.mp3') || audioUrl.endsWith('.webm') || audioUrl.includes('/static/audio/') || audioUrl.includes('/api/music/stream'))) {
+        if (audioUrl && (audioUrl.endsWith('.mp3') || audioUrl.endsWith('.webm') || audioUrl.includes('/static/audio/') || audioUrl.includes('/api/music/stream') || audioUrl.includes('/api/tts'))) {
             jarvisAudioPlayer.src = audioUrl;
             jarvisAudioPlayer.volume = 1.0;
             jarvisAudioPlayer.muted = false;
