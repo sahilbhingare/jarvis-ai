@@ -1165,6 +1165,13 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             const currentPersona = document.getElementById('personaSelect') ? document.getElementById('personaSelect').value : 'ironman';
             let userName = localStorage.getItem('jarvis_user_name');
+
+            // Clear stale/invalid short names (e.g. "as", "a", "ok")
+            if (userName && userName.trim().length < 2) {
+                localStorage.removeItem('jarvis_user_name');
+                userName = null;
+            }
+
             if (!userName) {
                 userName = await new Promise((resolve) => {
                     const modal = document.getElementById('nameModal');
@@ -1173,29 +1180,43 @@ document.addEventListener('DOMContentLoaded', () => {
                     
                     if (modal && input && submitBtn) {
                         modal.classList.add('active');
+                        input.value = '';
                         input.focus();
                         
                         const cleanup = () => {
                             modal.classList.remove('active');
                             submitBtn.removeEventListener('click', onSubmit);
+                            input.removeEventListener('keydown', onKeyEnter);
                         };
                         
                         const onSubmit = () => {
+                            const val = (input.value || '').trim();
+                            // Require at least 2 characters
+                            if (val.length < 2) {
+                                input.placeholder = 'किमान 2 अक्षरे टाका...';
+                                input.style.borderColor = '#ff4444';
+                                return;
+                            }
                             cleanup();
-                            resolve(input.value || "Sir");
+                            resolve(val);
+                        };
+
+                        const onKeyEnter = (e) => {
+                            if (e.key === 'Enter') onSubmit();
                         };
                         
                         submitBtn.addEventListener('click', onSubmit);
+                        input.addEventListener('keydown', onKeyEnter);
                     } else {
-                        resolve("Sir");
+                        resolve('Sir');
                     }
                 });
 
-                if (userName && userName.trim()) {
+                if (userName && userName.trim().length >= 2) {
                     userName = userName.trim();
                     localStorage.setItem('jarvis_user_name', userName);
                 } else {
-                    userName = "Sir";
+                    userName = 'Sir';
                 }
             }
 
