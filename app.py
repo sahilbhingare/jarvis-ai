@@ -144,10 +144,9 @@ def chat():
         aarti_type = None
         is_stop = True
     else:
-        # 3. Generate Neural Voice MP3 asynchronously via the new TTS endpoint
-        # The frontend will fetch this URL, allowing the text to be displayed instantly
-        encoded_text = urllib.parse.quote(final_text)
-        audio_url = f"/api/tts?text={encoded_text}&lang={lang}"
+        # 3. Generate Neural Voice MP3 synchronously — ensures audio is ready before response
+        from jarvis_voice import speak_sync
+        audio_url = speak_sync(final_text, preferred_lang=lang) or None
         is_aarti = False
         aarti_type = None
         is_stop = False
