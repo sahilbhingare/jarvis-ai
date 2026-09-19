@@ -579,23 +579,25 @@ document.addEventListener('DOMContentLoaded', () => {
     window.switchMusicCandidate = function(playerId, nextVid, encTitle, encChannel, encThumb) {
         const decodedTitle = decodeURIComponent(encTitle || 'Music Track');
         const decodedChannel = decodeURIComponent(encChannel || 'Artist');
-        const decodedThumb = encThumb ? decodeURIComponent(encThumb) : `https://img.youtube.com/vi/${nextVid}/hqdefault.jpg`;
 
         const titleEl = document.getElementById(playerId + '_title');
-        const mainTitleEl = document.getElementById(playerId + '_main_title');
         const chEl = document.getElementById(playerId + '_channel');
-        const thumbEl = document.getElementById(playerId + '_thumb');
-        const iframe = document.getElementById(playerId + '_iframe');
-
         if (titleEl) titleEl.textContent = decodedTitle;
-        if (mainTitleEl) mainTitleEl.textContent = decodedTitle;
         if (chEl) chEl.innerHTML = `<i class="fa-solid fa-compact-disc"></i> ${escapeHtml(decodedChannel)}`;
-        if (thumbEl) thumbEl.src = decodedThumb;
 
-        // Switch IFrame to new video
-        if (iframe) {
-            iframe.src = `https://www.youtube-nocookie.com/embed/${nextVid}?autoplay=1&enablejsapi=1&playsinline=1&rel=0&modestbranding=1`;
+        // Reset to thumbnail overlay, then auto-start new video
+        const overlay = document.getElementById(playerId + '_thumb_overlay');
+        const iframe = document.getElementById(playerId + '_iframe');
+        if (iframe) { iframe.src = ''; iframe.style.display = 'none'; }
+        if (overlay) {
+            // Update thumbnail
+            const img = overlay.querySelector('img');
+            if (img) img.src = `https://img.youtube.com/vi/${nextVid}/hqdefault.jpg`;
+            overlay.style.display = 'block';
+            overlay.onclick = () => window.startYTPlay(playerId, nextVid);
         }
+        // Auto-start after brief moment
+        setTimeout(() => window.startYTPlay(playerId, nextVid), 200);
         statusMessage.textContent = `🎵 आता वाजत आहे: ${decodedTitle}`;
     };
 
@@ -912,22 +914,38 @@ document.addEventListener('DOMContentLoaded', () => {
                         </div>
                     </div>
 
-                    <!-- YouTube Video Player (main) -->
-                    <div style="margin: 10px 0; border-radius: 14px; overflow: hidden; box-shadow: 0 0 24px #00f2fe44;">
+                    <!-- YouTube Player with tap-to-play overlay (Android autoplay fix) -->
+                    <div style="position:relative; margin:10px 0; border-radius:14px; overflow:hidden; box-shadow:0 0 24px #00f2fe44;">
+                        <!-- Thumbnail shown before play -->
+                        <div id="${playerId}_thumb_overlay" style="position:relative; cursor:pointer; background:#000;" onclick="window.startYTPlay('${playerId}', '${primary.id}')">
+                            <img src="https://img.youtube.com/vi/${primary.id}/hqdefault.jpg"
+                                style="width:100%;height:220px;object-fit:cover;display:block;opacity:0.75;"
+                                alt="${escapeHtml(safeTitle)}" />
+                            <!-- Big glowing play button overlay -->
+                            <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;pointer-events:none;">
+                                <div style="background:rgba(0,242,254,0.18);border:2.5px solid #00f2fe;border-radius:50%;width:72px;height:72px;display:flex;align-items:center;justify-content:center;box-shadow:0 0 32px #00f2fe88;">
+                                    <i class="fa-solid fa-play" style="color:#00f2fe;font-size:2rem;margin-left:6px;"></i>
+                                </div>
+                                <div style="color:#fff;font-size:0.85rem;margin-top:10px;text-shadow:0 0 8px #000;गाणे सुरू करा">▶ गाणे सुरू करा</div>
+                            </div>
+                        </div>
+                        <!-- IFrame loads only after tap -->
                         <iframe id="${playerId}_iframe"
-                            src="https://www.youtube-nocookie.com/embed/${primary.id}?autoplay=1&enablejsapi=1&origin=${encodeURIComponent(window.location.origin)}&playsinline=1&rel=0&modestbranding=1"
+                            src=""
                             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                             allowfullscreen
-                            style="width:100%;height:260px;border:none;display:block;">
+                            style="width:100%;height:260px;border:none;display:none;">
                         </iframe>
                     </div>
 
-                    <!-- Simple controls: Pause / Stop -->
-                    <div class="music-player-controls-row" style="justify-content: center; gap: 16px;">
-                        <button type="button" class="music-play-pause-btn" id="${playerId}_play_btn" title="प्ले / पॉज">
-                            <i class="fa-solid fa-pause"></i>
+                    <!-- Controls -->
+                    <div class="music-player-controls-row" style="justify-content:center;gap:16px;">
+                        <button type="button" class="music-play-pause-btn" id="${playerId}_play_btn"
+                            onclick="window.startYTPlay('${playerId}', '${primary.id}')" title="गाणे सुरू करा">
+                            <i class="fa-solid fa-play"></i>
                         </button>
-                        <button type="button" class="music-ctrl-btn music-stop-btn" title="गाणे थांबवा (Stop)">
+                        <button type="button" class="music-ctrl-btn music-stop-btn"
+                            onclick="window.stopYTPlay('${playerId}')" title="गाणे थांबवा">
                             <i class="fa-solid fa-stop"></i>
                         </button>
                     </div>
@@ -935,43 +953,53 @@ document.addEventListener('DOMContentLoaded', () => {
                     ${altButtonsHtml}
                 </div>
             `;
-
-            // Wire up Play/Pause/Stop buttons to control YouTube IFrame via postMessage
-            setTimeout(() => {
-                const iframe = document.getElementById(playerId + '_iframe');
-                const playBtn = document.getElementById(playerId + '_play_btn');
-                const stopBtn = playBtn ? playBtn.closest('.music-player-controls-row').querySelector('.music-stop-btn') : null;
-
-                const ytCmd = (cmd) => {
-                    if (iframe && iframe.contentWindow) {
-                        iframe.contentWindow.postMessage(JSON.stringify({ event: 'command', func: cmd, args: [] }), '*');
-                    }
-                };
-
-                if (playBtn) {
-                    playBtn.onclick = () => {
-                        const icon = playBtn.querySelector('i');
-                        if (icon && icon.classList.contains('fa-pause')) {
-                            ytCmd('pauseVideo');
-                            icon.className = 'fa-solid fa-play';
-                            statusMessage.textContent = 'गाणे पॉज केले आहे. // PAUSED';
-                        } else {
-                            ytCmd('playVideo');
-                            if (icon) icon.className = 'fa-solid fa-pause';
-                            statusMessage.textContent = '🎵 गाणे वाजत आहे... // PLAYING';
-                        }
-                    };
-                }
-
-                if (stopBtn) {
-                    stopBtn.onclick = () => {
-                        ytCmd('stopVideo');
-                        if (playBtn) { const i = playBtn.querySelector('i'); if (i) i.className = 'fa-solid fa-play'; }
-                        statusMessage.textContent = 'गाणे थांबवले आहे. // STOPPED';
-                    };
-                }
-            }, 800);
         });
+
+        // startYTPlay: called on user tap — loads IFrame with autoplay (gesture-triggered, so allowed)
+        window.startYTPlay = function(playerId, vid) {
+            const overlay = document.getElementById(playerId + '_thumb_overlay');
+            const iframe = document.getElementById(playerId + '_iframe');
+            const playBtn = document.getElementById(playerId + '_play_btn');
+            if (!iframe) return;
+            const origin = encodeURIComponent(window.location.origin);
+            iframe.src = `https://www.youtube-nocookie.com/embed/${vid}?autoplay=1&enablejsapi=1&origin=${origin}&playsinline=1&rel=0&modestbranding=1`;
+            iframe.style.display = 'block';
+            if (overlay) overlay.style.display = 'none';
+            if (playBtn) {
+                playBtn.innerHTML = '<i class="fa-solid fa-pause"></i>';
+                playBtn.onclick = () => window.toggleYTPlay(playerId);
+            }
+            statusMessage.textContent = '🎵 गाणे वाजत आहे... // PLAYING';
+        };
+
+        window.toggleYTPlay = function(playerId) {
+            const iframe = document.getElementById(playerId + '_iframe');
+            const playBtn = document.getElementById(playerId + '_play_btn');
+            if (!iframe || !iframe.contentWindow) return;
+            const icon = playBtn ? playBtn.querySelector('i') : null;
+            if (icon && icon.classList.contains('fa-pause')) {
+                iframe.contentWindow.postMessage(JSON.stringify({event:'command',func:'pauseVideo',args:[]}), '*');
+                icon.className = 'fa-solid fa-play';
+                statusMessage.textContent = 'गाणे पॉज केले // PAUSED';
+            } else {
+                iframe.contentWindow.postMessage(JSON.stringify({event:'command',func:'playVideo',args:[]}), '*');
+                if (icon) icon.className = 'fa-solid fa-pause';
+                statusMessage.textContent = '🎵 गाणे वाजत आहे... // PLAYING';
+            }
+        };
+
+        window.stopYTPlay = function(playerId) {
+            const iframe = document.getElementById(playerId + '_iframe');
+            const overlay = document.getElementById(playerId + '_thumb_overlay');
+            const playBtn = document.getElementById(playerId + '_play_btn');
+            if (iframe) { iframe.src = ''; iframe.style.display = 'none'; }
+            if (overlay) overlay.style.display = 'block';
+            if (playBtn) {
+                playBtn.innerHTML = '<i class="fa-solid fa-play"></i>';
+                playBtn.onclick = () => window.startYTPlay(playerId, iframe ? iframe.getAttribute('data-vid') : '');
+            }
+            statusMessage.textContent = 'गाणे थांबवले // STOPPED';
+        };
         
         // Inline YouTube Player Card (Legacy fallback)
         escaped = escaped.replace(/\[YOUTUBE_INLINE:([a-zA-Z0-9_-]+):([^\]]*)\]/g, function(match, vid, title) {
